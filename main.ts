@@ -1,18 +1,34 @@
-let door_status = 0
-basic.forever(function () {
+function dht11 () {
     NPNBitKit.DHT11Read(DigitalPin.P0)
-    basic.pause(500)
+    basic.pause(100)
     serial.writeString("!7:TEMP:" + NPNBitKit.DHT11Temp() + "#")
-    basic.pause(500)
+    basic.pause(100)
     serial.writeString("!7:HUMID:" + NPNBitKit.DHT11Hum() + "#")
-    basic.pause(500)
-    serial.writeString("!1:DOOR:" + pins.digitalReadPin(DigitalPin.P1) + "#")
-    door_status = pins.digitalReadPin(DigitalPin.P1)
-    basic.pause(500)
-    if (door_status == 0) {
-        basic.showIcon(IconNames.Yes)
+    basic.pause(100)
+}
+radio.onReceivedNumber(function (receivedNumber) {
+    if (receivedNumber == 1) {
+        pins.digitalWritePin(DigitalPin.P4, 1)
+        pins.digitalWritePin(DigitalPin.P5, 0)
+    } else if (receivedNumber == 2) {
+        pins.digitalWritePin(DigitalPin.P4, 0)
+        pins.digitalWritePin(DigitalPin.P5, 1)
     } else {
-        basic.showIcon(IconNames.No)
+    	
     }
-    basic.pause(500)
+})
+function gas () {
+    NPNBitKit.DHT11Read(DigitalPin.P0)
+    basic.pause(100)
+    serial.writeString("!7:TEMP:" + NPNBitKit.DHT11Temp() + "#")
+    basic.pause(100)
+    serial.writeString("!7:HUMID:" + NPNBitKit.DHT11Hum() + "#")
+    basic.pause(100)
+}
+function turn_led () {
+	
+}
+basic.forever(function () {
+    dht11()
+    basic.pause(2000)
 })
