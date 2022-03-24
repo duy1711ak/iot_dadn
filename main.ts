@@ -1,40 +1,62 @@
-let gas_val = 0
-let gas_mV = 0
-let gas_percent = 0
-let cmd = ""
 function dht11 () {
     NPNBitKit.DHT11Read(DigitalPin.P0)
+    temp = NPNBitKit.DHT11Temp()
+    humi = NPNBitKit.DHT11Hum()
+    NPNLCD.ShowString("Temp:", 0, 0)
+    NPNLCD.ShowNumber(temp, 5, 0)
+    NPNLCD.ShowString("Humi:", 8, 0)
+    NPNLCD.ShowNumber(humi, 13, 0)
     basic.pause(100)
-    serial.writeString("!7:TEMP:" + NPNBitKit.DHT11Temp() + "#")
+    serial.writeString("!7:TEMP:" + temp + "#")
     basic.pause(100)
-    serial.writeString("!7:HUMID:" + NPNBitKit.DHT11Hum() + "#")
+    serial.writeString("!7:HUMID:" + humi + "#")
     basic.pause(100)
 }
+function light_sensor () {
+    light_level = pins.analogReadPin(AnalogPin.P4)
+    if (light_level <= 300) {
+        pins.digitalWritePin(DigitalPin.P5, 1)
+        pins.digitalWritePin(DigitalPin.P6, 1)
+    } else {
+        pins.digitalWritePin(DigitalPin.P5, 0)
+        pins.digitalWritePin(DigitalPin.P6, 0)
+    }
+}
 function door () {
-    if (NPNBitKit.ButtonDoorOpen(DigitalPin.P3)) {
-        NPNBitKit.Buzzer(DigitalPin.P6, true)
+    if (NPNBitKit.ButtonDoorOpen(DigitalPin.P1)) {
+        pins.digitalWritePin(DigitalPin.P3, 1)
+        pins.digitalWritePin(DigitalPin.P4, 0)
         serial.writeString("!8:MAGNETIC:" + "1" + "#")
     } else {
-        NPNBitKit.Buzzer(DigitalPin.P6, false)
+        pins.digitalWritePin(DigitalPin.P3, 0)
+        pins.digitalWritePin(DigitalPin.P4, 1)
         serial.writeString("!8:MAGNETIC:" + "0" + "#")
     }
     basic.pause(100)
 }
 function gas () {
-    gas_val = pins.analogReadPin(AnalogPin.P3)
-    gas_mV = Math.map(0, 0, 1023, 0, 330)
-    gas_percent = Math.map(0, 0, 1023, 0, 100)
-    serial.writeString("!23:GAS:" + gas_percent + "#")
-    basic.pause(100)
-}
-serial.onDataReceived(serial.delimiters(Delimiters.Hash), function () {
-    cmd = serial.readUntil(serial.delimiters(Delimiters.Hash))
-    if (cmd == "0") {
-        pins.digitalWritePin(DigitalPin.P0, 1)
+    gas_raw = pins.analogReadPin(AnalogPin.P10)
+    gas_percent = Math.map(gas_raw, 0, 1023, 0, 100)
+    NPNLCD.ShowString("Gas:", 0, 1)
+    NPNLCD.ShowNumber(gas_percent, 4, 1)
+    if (gas_percent >= 54) {
+        pins.digitalWritePin(DigitalPin.P2, 1)
+        serial.writeString("!23:GAS:" + "1" + "#")
     } else {
-        pins.digitalWritePin(DigitalPin.P0, 0)
+        pins.digitalWritePin(DigitalPin.P2, 0)
     }
-})
+}
+let gas_percent = 0
+let gas_raw = 0
+let light_level = 0
+let humi = 0
+let temp = 0
+led.enable(false)
+NPNLCD.LcdInit()
 basic.forever(function () {
-	
+    light_sensor()
+    door()
+    gas()
+    dht11()
+    basic.pause(1000)
 })
