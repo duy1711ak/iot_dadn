@@ -59,14 +59,15 @@ function door () {
     }
 }
 function gas () {
-    if (alarm_controller != 0) {
-        alarm_controller += -1
+    NPNLCD.ShowNumber(alarm_controller, 0, 0)
+    if (alarm_controller != 3) {
+        alarm_controller += 1
     }
     gas_raw = pins.analogReadPin(AnalogPin.P10)
     gas_percent = Math.map(gas_raw, 0, 1023, 0, 100)
     NPNLCD.ShowNumber(gas_percent, 0, 1)
     if (gas_percent >= 45) {
-        if (alarm_controller == 0) {
+        if (alarm_controller == 3) {
             pins.digitalWritePin(DigitalPin.P2, 1)
         }
         if (tmp_gas != 1) {
@@ -74,7 +75,7 @@ function gas () {
             tmp_gas = 1
         }
     } else {
-        if (alarm_controller == 0) {
+        if (alarm_controller == 3) {
             pins.digitalWritePin(DigitalPin.P2, 0)
         }
         if (tmp_gas != 0) {
@@ -116,8 +117,10 @@ serial.onDataReceived(serial.delimiters(Delimiters.Hash), function () {
     } else if (cmd == "lsys0") {
         light_system = 0
         basic.pause(100)
-    } else if (cmd == "alarm0") {
-        alarm_controller = 3
+    } else if (cmd == "a0") {
+        alarm_controller = 0
+        pins.digitalWritePin(DigitalPin.P2, 0)
+        basic.pause(100)
     } else {
     	
     }
@@ -146,9 +149,9 @@ count_dht11 = 5
 alarm_controller = 0
 basic.pause(100)
 basic.forever(function () {
+    gas()
     dht11()
     door()
-    gas()
     light_sensor()
     basic.pause(1000)
 })
